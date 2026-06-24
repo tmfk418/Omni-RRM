@@ -4,7 +4,7 @@
 [**🤗 Omni-RRM-7B**](https://huggingface.co/Omni-RRM/Omni-RRM-7B) ·
 [**🤗 Omni-RRM-3B**](https://huggingface.co/Omni-RRM/Omni-RRM-3B) ·
 [**📄 Paper**](https://arxiv.org/abs/2602.00846) ·
-[**🌐 Project Page**](#)
+[**🌐 Project Page**](https://tmfk418.github.io/Omni-RRM/)
 
 Official repository for **Omni-RRM**, a rubric-grounded omni-modal reward model for preference evaluation across **text, image, video, and audio**.
 
