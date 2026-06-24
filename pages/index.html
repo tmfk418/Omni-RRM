@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Omni-RRM is a rubric-grounded omni-modal reward model for structured preference judgment across text, image, video, and audio."
+    >
+    <meta property="og:title" content="Omni-RRM">
+    <meta property="og:description" content="Advancing Omni Reward Modeling via Automatic Rubric-Grounded Preference Synthesis.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="assets/method-overview.png">
+    <title>Omni-RRM</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="page">
+      <header class="site-header">
+        <h1 class="site-title">
+          Omni-RRM: Advancing Omni Reward Modeling via Automatic
+          <span>Rubric-Grounded</span> Preference Synthesis
+        </h1>
+
+        <div class="authors">
+          <a href="#">Zicheng Kong</a><sup>1,*</sup>,
+          <a href="#">Dehua Ma</a><sup>1,*</sup>,
+          <a href="#">Zhenbo Xu</a><sup>1</sup>,
+          <a href="#">Alven Yang</a><sup>1</sup>,
+          <a href="#">Yiwei Ru</a><sup>1</sup>,
+          <a href="#">Haoran Wang</a><sup>2</sup>,
+          <a href="#">Zixuan Zhou</a><sup>1</sup>,
+          <a href="#">Fuqing Bie</a><sup>1</sup>,
+          <a href="#">Liuyu Xiang</a><sup>1</sup>,
+          <a href="#">Huijia Wu</a><sup>1</sup>,
+          <a href="#">Jian Zhao</a><sup>3</sup>,
+          <a href="#">Zhaofeng He</a><sup>1</sup>
+        </div>
+
+        <div class="affiliations">
+          <p><sup>1</sup>Beijing University of Posts and Telecommunications</p>
+          <p><sup>2</sup>Tsinghua University</p>
+          <p><sup>3</sup>TeleAI</p>
+          <p><sup>*</sup>Equal contribution</p>
+        </div>
+
+        <div class="venue-line">
+          Rubric-grounded reward modeling across text, image, video, and audio.
+        </div>
+
+        <div class="links" aria-label="Project links">
+          <a class="btn" href="https://github.com/dma2077/Omni-RRM">Code</a>
+          <a class="btn" href="https://huggingface.co/datasets/Omni-RRM/Omni-Preference">Dataset</a>
+          <a class="btn" href="https://huggingface.co/Omni-RRM/Omni-RRM-7B">Model</a>
+          <a class="btn" href="https://arxiv.org/abs/2602.00846">arXiv</a>
+        </div>
+      </header>
+
+      <main>
+        <section class="teaser fade-up">
+          <img src="assets/method-overview.png" alt="Overview of the Omni-RRM pipeline.">
+          <p class="fig-caption">
+            <b>Omni-RRM overview.</b> Omni-Preference is automatically synthesized
+            by contrasting strong and weak model responses, reconciling teacher
+            judgments into rubric-grounded preference records, and training a
+            structured reward model with progressive SFT and GRPO.
+          </p>
+        </section>
+
+        <section id="abstract" class="panel fade-up">
+          <h2>Abstract</h2>
+          <p>
+            Multimodal large language models still face brittle alignment because
+            many reward models are vision-centric, dependent on expensive human
+            labels, and reduced to opaque scalar scores. Omni-RRM addresses this
+            gap with an omni-modal, rubric-grounded reward model that generates
+            structured multi-dimensional reward signals across text, image,
+            video, and audio.
+          </p>
+          <p>
+            We introduce Omni-Preference, a high-quality dataset constructed via
+            automatic rubric-grounded preference synthesis. Teacher models
+            reconcile raw preferences into explicit justifications, and
+            Omni-RRM is trained with a progressive SFT plus GRPO regimen to
+            sharpen discrimination on low-margin preference pairs. Omni-RRM-7B
+            reaches 70.4% five-benchmark overall accuracy, including 80.2% on
+            ShareGPT-Video and 66.8% on Audio-HH-RLHF.
+          </p>
+        </section>
+
+        <section id="highlights" class="panel fade-up">
+          <h2>Highlights</h2>
+          <div class="metric-grid">
+            <div class="metric">
+              <strong>70.4%</strong>
+              <span>Five-benchmark overall accuracy</span>
+            </div>
+            <div class="metric">
+              <strong>80.2%</strong>
+              <span>ShareGPT-Video preference accuracy</span>
+            </div>
+            <div class="metric">
+              <strong>66.8%</strong>
+              <span>Audio-HH-RLHF preference accuracy</span>
+            </div>
+            <div class="metric">
+              <strong>41K</strong>
+              <span>Rubric-grounded Omni-Preference samples</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="overview" class="panel fade-up">
+          <h2>Method Overview</h2>
+          <div class="overview-grid">
+            <details class="implementation-step" open>
+              <summary>
+                <span class="implementation-title">Step 1: Omni-Preference Construction</span>
+              </summary>
+              <p>
+                Candidate response pairs are produced with capability-contrast
+                sampling. Strong and weak multimodal generators answer the same
+                image, video, or audio-conditioned prompt, creating diverse
+                preference candidates without relying on manual labels.
+              </p>
+              <p>
+                Two heterogeneous teacher models then annotate each pair with
+                scores, a categorical verdict, and five-criterion comparative
+                rationales. We retain pairs only when teachers agree on a
+                non-tie verdict and the score ordering is logically consistent.
+              </p>
+            </details>
+
+            <details class="implementation-step">
+              <summary>
+                <span class="implementation-title">Step 2: Rubric-Grounded Reward Records</span>
+              </summary>
+              <p>
+                Omni-RRM does not output only a scalar reward. It emits an
+                auditable record containing <code>score_A</code>,
+                <code>score_B</code>, <code>better</code>, a reasoning field,
+                and a redundant <code>final_verdict</code> for robust parsing.
+              </p>
+              <div class="schema-box">
+                <pre><code>{
+  "score_A": 8,
+  "score_B": 6,
+  "better": "A",
+  "reasoning": {
+    "fluency": "...",
+    "relevance": "...",
+    "accuracy": "...",
+    "reasoning": "...",
+    "safety": "..."
+  },
+  "final_verdict": "&lt;answer&gt;[[A]]&lt;/answer&gt;"
+}</code></pre>
+              </div>
+            </details>
+
+            <details class="implementation-step">
+              <summary>
+                <span class="implementation-title">Step 3: Progressive SFT plus GRPO</span>
+              </summary>
+              <p>
+                The SFT stage teaches the model to follow the structured reward
+                interface and generate coherent rubric-grounded rationales. The
+                GRPO stage then optimizes a bounded composite reward over schema
+                validity, preference correctness, score-verdict consistency, and
+                rubric coverage.
+              </p>
+              <div class="formula">
+                R = w_fmt R_fmt + w_pref R_pref + w_rub R_rub
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <section id="experiments" class="panel fade-up">
+          <h2>Main Results</h2>
+          <p>
+            Omni-RRM is evaluated on image, video, audio, and omni-modal
+            preference benchmarks. The 7B SFT+RL model achieves strong
+            open-source reward-modeling performance and closely matches a
+            top-tier proprietary judge in overall accuracy.
+          </p>
+
+          <div class="table-shell full-results" role="region" aria-label="Main benchmark results" tabindex="0">
+            <table>
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>VL-Reward</th>
+                  <th>MM-RewardBench</th>
+                  <th>ShareGPT-Video</th>
+                  <th>Audio-HH</th>
+                  <th>TA2T</th>
+                  <th>Overall</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="group-row">
+                  <td colspan="7">Proprietary models</td>
+                </tr>
+                <tr>
+                  <td>GPT-4o-mini</td>
+                  <td>59.8</td>
+                  <td>61.9</td>
+                  <td>53.9</td>
+                  <td>58.2</td>
+                  <td>57.9</td>
+                  <td>58.3</td>
+                </tr>
+                <tr>
+                  <td>Doubao-1.5-Vision-Pro</td>
+                  <td>77.3</td>
+                  <td>68.0</td>
+                  <td>77.0</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>-</td>
+                </tr>
+                <tr>
+                  <td>Gemini-2.0-Flash</td>
+                  <td>73.4</td>
+                  <td>62.8</td>
+                  <td>74.6</td>
+                  <td>60.1</td>
+                  <td>59.9</td>
+                  <td>66.2</td>
+                </tr>
+                <tr>
+                  <td>Gemini-2.5-Pro</td>
+                  <td>79.6</td>
+                  <td>63.3</td>
+                  <td>78.8</td>
+                  <td>66.5</td>
+                  <td>64.9</td>
+                  <td>70.6</td>
+                </tr>
+                <tr class="group-row">
+                  <td colspan="7">Open-source MLLMs</td>
+                </tr>
+                <tr>
+                  <td>Qwen2.5-Omni-3B</td>
+                  <td>53.7</td>
+                  <td>53.9</td>
+                  <td>58.1</td>
+                  <td>58.7</td>
+                  <td>47.9</td>
+                  <td>54.5</td>
+                </tr>
+                <tr>
+                  <td>Qwen2.5-Omni-7B</td>
+                  <td>57.8</td>
+                  <td>57.5</td>
+                  <td>66.3</td>
+                  <td>62.4</td>
+                  <td>56.9</td>
+                  <td>60.2</td>
+                </tr>
+                <tr>
+                  <td>Qwen2.5-VL-3B</td>
+                  <td>53.2</td>
+                  <td>53.3</td>
+                  <td>61.2</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>-</td>
+                </tr>
+                <tr>
+                  <td>Qwen2.5-VL-7B</td>
+                  <td>58.2</td>
+                  <td>56.0</td>
+                  <td>70.5</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>-</td>
+                </tr>
+                <tr>
+                  <td>Qwen2.5-VL-72B</td>
+                  <td>62.3</td>
+                  <td>63.5</td>
+                  <td>72.9</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>-</td>
+                </tr>
+                <tr class="group-row">
+                  <td colspan="7">Open-source reward models</td>
+                </tr>
+                <tr>
+                  <td>LLaVA-Critic-7B</td>
+                  <td>54.1</td>
+                  <td>56.0</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>-</td>
+                </tr>
+                <tr>
+                  <td>Skywork-VL-Reward-7B</td>
+                  <td>60.4</td>
+                  <td>67.4</td>
+                  <td>59.9</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>-</td>
+                </tr>
+                <tr>
+                  <td>UnifiedReward-think-7B</td>
+                  <td>66.6</td>
+                  <td>71.4</td>
+                  <td>77.8</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>-</td>
+                </tr>
+                <tr>
+                  <td>Omni-RewardModel-BT</td>
+                  <td>60.4</td>
+                  <td>58.4</td>
+                  <td>63.7</td>
+                  <td>61.3</td>
+                  <td>60.5</td>
+                  <td>60.9</td>
+                </tr>
+                <tr>
+                  <td>R1-Reward-7B</td>
+                  <td>65.8</td>
+                  <td>72.3</td>
+                  <td>58.7</td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td>-</td>
+                </tr>
+                <tr class="group-row">
+                  <td colspan="7">Ours</td>
+                </tr>
+                <tr>
+                  <td>Omni-RRM-3B SFT</td>
+                  <td>56.8</td>
+                  <td>58.1</td>
+                  <td>64.9</td>
+                  <td>60.3</td>
+                  <td>54.3</td>
+                  <td>58.9</td>
+                </tr>
+                <tr>
+                  <td>Omni-RRM-7B SFT</td>
+                  <td>60.4</td>
+                  <td>61.0</td>
+                  <td>70.5</td>
+                  <td>62.8</td>
+                  <td>58.5</td>
+                  <td>62.6</td>
+                </tr>
+                <tr class="ours">
+                  <td>Omni-RRM-3B SFT+RL</td>
+                  <td>58.5</td>
+                  <td>68.9</td>
+                  <td>67.4</td>
+                  <td>65.1</td>
+                  <td>61.1</td>
+                  <td>64.2</td>
+                </tr>
+                <tr class="ours strong">
+                  <td>Omni-RRM-7B SFT+RL</td>
+                  <td>67.1</td>
+                  <td>72.9</td>
+                  <td>80.2</td>
+                  <td>66.8</td>
+                  <td>65.0</td>
+                  <td>70.4</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="caption">
+            Accuracy (%) on multimodal preference benchmarks. Overall is the
+            mean over the five benchmark columns when all are evaluated.
+          </p>
+        </section>
+
+        <section id="analysis" class="panel fade-up">
+          <h2>Additional Analyses</h2>
+          <div class="analysis-grid">
+            <figure>
+              <h3>Best-of-N Inference-Time Alignment</h3>
+              <img src="assets/bon-curve.png" alt="Best-of-N curves across MMMU, Video-MME, and AVQA.">
+              <figcaption class="caption">
+                With Qwen2.5-Omni-7B fixed as the generator, Omni-RRM selects
+                better responses as the candidate pool grows.
+              </figcaption>
+            </figure>
+            <figure>
+              <h3>Omni-Modal Transfer</h3>
+              <img src="assets/modality-radar.png" alt="Radar chart for omni-modal transfer.">
+              <figcaption class="caption">
+                Joint image, video, and audio supervision forms the strongest
+                reward-modeling envelope under a fixed training budget.
+              </figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section id="case-study" class="panel fade-up">
+          <h2>Qualitative Case Study</h2>
+          <p>
+            Omni-RRM can also serve as structured feedback. In the example
+            below, a generator reaches the correct answer option but relies on an
+            invalid derivation. The reward judgment identifies the issue and
+            supports a cleaner revised response.
+          </p>
+          <img class="case-image" src="assets/case-study.png" alt="Qualitative case study of reward-guided revision.">
+        </section>
+
+        <section id="resources" class="panel fade-up">
+          <h2>Resources</h2>
+          <div class="resource-grid">
+            <a href="https://github.com/dma2077/Omni-RRM">
+              <strong>Code</strong>
+              <span>Training, inference, and evaluation scripts</span>
+            </a>
+            <a href="https://huggingface.co/datasets/Omni-RRM/Omni-Preference">
+              <strong>Omni-Preference</strong>
+              <span>41K rubric-grounded multimodal preference samples</span>
+            </a>
+            <a href="https://huggingface.co/Omni-RRM/Omni-RRM-7B">
+              <strong>Omni-RRM-7B</strong>
+              <span>Released 7B reward model checkpoint</span>
+            </a>
+            <a href="https://huggingface.co/Omni-RRM/Omni-RRM-3B">
+              <strong>Omni-RRM-3B</strong>
+              <span>Released 3B reward model checkpoint</span>
+            </a>
+          </div>
+        </section>
+
+        <section id="bibtex" class="panel fade-up">
+          <h2>BibTeX</h2>
+          <div class="bibtex-container">
+            <pre class="bibtex"><code>@article{kong2026omnirrm,
+  title={Omni-RRM: Advancing Omni Reward Modeling via Automatic Rubric-Grounded Preference Synthesis},
+  author={Kong, Zicheng and Ma, Dehua and Xu, Zhenbo and Yang, Alven and Ru, Yiwei and Wang, Haoran and Zhou, Zixuan and Bie, Fuqing and Xiang, Liuyu and Wu, Huijia and Zhao, Jian and He, Zhaofeng},
+  journal={arXiv preprint arXiv:2602.00846},
+  year={2026}
+}</code></pre>
+            <button class="copy-btn" type="button">Copy</button>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <p>Omni-RRM Project Page. Code, data, and checkpoints are linked above.</p>
+      </footer>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

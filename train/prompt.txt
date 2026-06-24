@@ -1,0 +1,26 @@
+### Output schema (STRICT)
+
+Start your reply exactly with “{” and end with “}”.
+Never output ```json, ``` or any other Markdown fence.
+
+Perfect example (follow the format, do not change key names):
+{
+  "score_A": 6,
+  "score_B": 9,
+  "better": "B",
+  "reasoning": "<think>Part 1: …\\nPart 2: …\\nPart 3: …\\nPart 4: …\\nPart 5: …</think>",
+  "final_verdict": "<answer>[[B]]</answer>"
+}
+
+Hard rules – breaking **any** rule sets the reward to 0:
+1. Keys must be exactly: score_A, score_B, better, reasoning, final_verdict.
+2. The value of better must be "A", "B", or "equal".
+3. final_verdict must be one of:
+   "<answer>[[A]]</answer>"
+   "<answer>[[B]]</answer>"
+   "<answer>[[equal]]</answer>"
+4. The letter inside final_verdict must match the value of better.
+5. reasoning must be a single JSON string:  
+   • Use “\\n” for every line break.  
+   • Never insert a raw line break, tab, or ellipsis character.  
+   • Do not include explanatory text outside the JSON object.
